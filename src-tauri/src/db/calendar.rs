@@ -7,7 +7,7 @@
 use crate::db::Database;
 use crate::models::error::Result;
 use crate::models::{CalendarAttendee, CalendarEvent};
-use rusqlite::params;
+use rusqlite::{params, OptionalExtension};
 
 /// Attendees were first persisted as plain email-string arrays; they now carry
 /// RSVP state. Accept both shapes so pre-upgrade rows keep their attendee list
@@ -211,6 +211,13 @@ impl Database {
             params![account_id, calendar_id, provider_event_id],
         )?;
         Ok(())
+    }
+
+    /// Resolve an explicit local event reference, including cancelled instances.
+    pub fn get_calendar_event_by_id(&self, account_id: &str, id: &str) -> Result<Option<CalendarEvent>> {
+        let conn = self.reader();
+        let sql = format!("SELECT {EVENT_COLUMNS} FROM calendar_events WHERE account_id = ?1 AND id = ?2");
+        Ok(conn.query_row(&sql, params![account_id, id], row_to_event).optional()?)
     }
 
     /// One event by its calendar + provider id — the delete command resolves

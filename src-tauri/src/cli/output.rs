@@ -26,6 +26,16 @@ use crate::services::search::SearchMethod;
 
 use super::{render, OutputMode, RenderStyle};
 
+/// Complete offline exports: structured envelope for automation, untruncated JSON text otherwise.
+pub fn render_export(value: Value, mode: OutputMode) -> Result<()> {
+    if mode == OutputMode::Json {
+        emit_ok(value)
+    } else {
+        println!("{}", serde_json::to_string_pretty(&value)?);
+        Ok(())
+    }
+}
+
 /// Logger backend for the CLI: prints `HH:MM:SS.mmm [level] source: message` to
 /// stderr. The wall-clock prefix makes it easy to read timings off a chat trace
 /// (e.g. how long model load or a tool call took). When quiet only `error`-level

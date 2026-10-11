@@ -201,6 +201,18 @@ pub enum Command {
         id: String,
     },
 
+    /// Export exact cached text and any stored original MIME (offline).
+    Source { id: String },
+
+    /// Export an offline dossier referencing existing mail, tasks and events.
+    Project {
+        #[arg(long, value_name = "FILE")]
+        manifest: PathBuf,
+    },
+
+    /// Create synthetic prototype data in an explicitly supplied empty directory.
+    PrototypeSeed,
+
     /// Full-text search across an account's mail.
     Search {
         /// Search query.
@@ -523,6 +535,15 @@ fn run_code() -> u8 {
 }
 
 async fn run_async(cli: Cli, mode: OutputMode) -> crate::models::error::Result<()> {
+    // Seed must validate the explicit destination before any default DB/keychain bootstrap.
+    if matches!(cli.command, Some(Command::PrototypeSeed)) {
+        let data_dir = cli.data_dir.as_deref().ok_or_else(|| {
+            crate::models::error::AppError::InvalidInput("prototype-seed requires an explicit --data-dir".into())
+        })?;
+        crate::db::set_db_init_timing(false);
+        let value = crate::services::source_project::seed(data_dir)?;
+        return output::render_export(value, mode);
+    }
     // Bootstrap: keychain → data dir → DB → install logger + event sink.
     let mut session = CliSession::bootstrap(&cli, mode)?;
 

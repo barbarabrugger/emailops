@@ -3663,3 +3663,9 @@ which has an advisory with no patched release. i18next-cli emits every CLDR plur
 **Rejected:** Dismissing the advisory as a dev-only risk (it would stay on a deprecated
 tool with no upgrade path). `disablePlurals` (catalogs that use `_one`/`_other` keys
 would then read as missing).
+
+## 2026-10-12 — Fork source/project prototype stays deterministic and isolated
+
+**Decision:** Expose exact source bundles and a manifest-based project dossier through the native CLI, reusing existing tasks and calendar events. A loopback, read-only adapter makes the dossier available to a manually triggered n8n workflow. Prototype data is synthetic; the seed uses an explicit empty directory.
+**Context:** Cached snippets and filename-based attachment identities cannot establish complete source coverage. Original MIME, positional part identities, hashes and explicit coverage gaps let tools reason from inspectable evidence. Existing live sync is not changed in this prototype.
+**Rejected:** A second task/calendar store, an early project UI, broad remote command execution, and a mandatory new AI layer. Repeated reviewed logic should become deterministic n8n orchestration or shared fork features with regression tests.

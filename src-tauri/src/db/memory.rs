@@ -501,6 +501,13 @@ impl Database {
 
     // ── Pending tasks ────────────────────────────────────────────────────────
 
+    /// Resolve an explicit dossier reference, including closed tasks, within one account.
+    pub fn get_pending_task_by_id(&self, account_id: &str, id: &str) -> Result<Option<PendingTask>> {
+        let conn = self.reader();
+        let sql = format!("{TASK_SELECT} WHERE account_id = ?1 AND id = ?2");
+        Ok(conn.query_row(&sql, params![account_id, id], row_to_task).optional()?)
+    }
+
     pub fn insert_pending_task(&self, task: &PendingTask) -> Result<()> {
         let conn = self.connection();
         conn.execute(

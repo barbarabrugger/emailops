@@ -40,6 +40,7 @@ pub mod sender_controls;
 pub mod shared_docs;
 pub mod signatures;
 pub mod skills;
+pub mod source_project;
 pub mod storage_stats;
 pub mod sync_error_dedup;
 // Desktop-only: the Tauri background scheduler (IMAP IDLE threads, Gmail polling,

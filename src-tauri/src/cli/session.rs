@@ -84,6 +84,8 @@ pub(crate) fn opens_read_only(command: Option<&Command>) -> bool {
                 | Command::Docs { flush: false }
                 | Command::Drafts
                 | Command::Show { .. }
+                | Command::Source { .. }
+                | Command::Project { .. }
                 | Command::Emails { .. }
                 | Command::Search { .. }
                 | Command::Accounts {
@@ -114,9 +116,18 @@ impl CliSession {
     /// Wire up the process: keychain → data dir → DB → logger + event sink,
     /// then resolve the working account and model.
     pub fn bootstrap(cli: &Cli, mode: OutputMode) -> Result<Self> {
-        // Token reads (sync/chat provider auth) require the native keychain
-        // store to be initialised first, exactly as the desktop app does.
-        crate::services::keychain::init_native_store()?;
+        let offline_export = matches!(cli.command, Some(Command::Source { .. } | Command::Project { .. }));
+        if offline_export
+            && (cli.data_dir.as_ref().is_none_or(|path| path.as_os_str().is_empty()) || cli.account.is_none())
+        {
+            return Err(AppError::InvalidInput(
+                "source/project require explicit --data-dir and --account".into(),
+            ));
+        }
+        // Only the deterministic export commands bypass credential setup. Search/chat retain it.
+        if !offline_export {
+            crate::services::keychain::init_native_store()?;
+        }
 
         // Silence `Database::new`'s `[db-init]` startup timings unless a
         // `--trace` command asked for diagnostics. Must precede `Database::new`.
@@ -137,7 +148,9 @@ impl CliSession {
         // process-global DB handle in dev builds. Bind it — but don't warm the
         // cache: a one-shot command shouldn't hit the keychain for accounts it
         // never touches.
-        crate::services::accounts::bind_credential_db(&db);
+        if !offline_export {
+            crate::services::accounts::bind_credential_db(&db);
+        }
 
         // Logs go to stderr so stdout stays a clean data/JSON channel. The gate
         // is shared with the session so chat turns can flip it per `--trace`.
