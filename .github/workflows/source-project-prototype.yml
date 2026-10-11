@@ -1,0 +1,52 @@
+name: Source project prototype (Linux)
+
+on:
+  pull_request:
+    paths:
+      - 'src-tauri/**'
+      - 'tools/source_bridge/**'
+      - 'scripts/source_project_*'
+      - '.github/workflows/source-project-prototype.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prototype:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          key: source-project-cli
+      - name: Native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev
+          mkdir -p src-tauri/resources/models
+          touch src-tauri/resources/models/nomic-embed-text-v1.5-q4_k_m.gguf
+      - name: Gateway contracts
+        run: python3 -B -m unittest discover -s tools/source_bridge -p 'test_*.py'
+      - name: Source and project contracts
+        run: cargo test --manifest-path src-tauri/Cargo.toml --locked --no-default-features --features cli --test source_project
+      - name: Build Linux CLI
+        run: cargo build --manifest-path src-tauri/Cargo.toml --locked --no-default-features --features cli --bin emailops-cli
+      - name: CLI lints and formatting
+        run: |
+          cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+          cargo clippy --manifest-path src-tauri/Cargo.toml --locked --no-default-features --features cli --tests -- -D warnings
+      - name: Isolated native CLI to n8n smoke
+        run: python3 tools/source_bridge/smoke.py --cli src-tauri/target/debug/emailops-cli
+      - name: Package tested prototype
+        run: bash scripts/source_project_package.sh
+      - uses: actions/upload-artifact@v6
+        with:
+          name: emailops-cli-linux-x86_64-prototype
+          path: release/emailops-cli-linux-x86_64-prototype.tar.gz
+          retention-days: 14

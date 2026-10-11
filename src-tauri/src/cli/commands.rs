@@ -17,6 +17,10 @@ pub async fn dispatch(session: &mut CliSession, command: Command) -> Result<()> 
     match command {
         Command::Accounts { action } => super::accounts::run_account(session, action).await,
 
+        Command::Source { .. } | Command::Project { .. } | Command::PrototypeSeed => {
+            Err(AppError::InvalidInput("source/project prototype not implemented".into()))
+        }
+
         Command::Emails {
             limit,
             offset,

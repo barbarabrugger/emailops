@@ -201,6 +201,18 @@ pub enum Command {
         id: String,
     },
 
+    /// Export exact cached text and any stored original MIME (offline).
+    Source { id: String },
+
+    /// Export an offline dossier referencing existing mail, tasks and events.
+    Project {
+        #[arg(long, value_name = "FILE")]
+        manifest: PathBuf,
+    },
+
+    /// Create synthetic prototype data in an explicitly supplied empty directory.
+    PrototypeSeed,
+
     /// Full-text search across an account's mail.
     Search {
         /// Search query.
@@ -523,6 +535,12 @@ fn run_code() -> u8 {
 }
 
 async fn run_async(cli: Cli, mode: OutputMode) -> crate::models::error::Result<()> {
+    // RED scaffold: offline prototype commands must not touch a default data directory.
+    if matches!(cli.command, Some(Command::Source { .. } | Command::Project { .. } | Command::PrototypeSeed)) {
+        return Err(crate::models::error::AppError::InvalidInput(
+            "source/project prototype not implemented".into(),
+        ));
+    }
     // Bootstrap: keychain → data dir → DB → install logger + event sink.
     let mut session = CliSession::bootstrap(&cli, mode)?;
 
