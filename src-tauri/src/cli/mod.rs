@@ -536,7 +536,10 @@ fn run_code() -> u8 {
 
 async fn run_async(cli: Cli, mode: OutputMode) -> crate::models::error::Result<()> {
     // RED scaffold: offline prototype commands must not touch a default data directory.
-    if matches!(cli.command, Some(Command::Source { .. } | Command::Project { .. } | Command::PrototypeSeed)) {
+    if matches!(
+        cli.command,
+        Some(Command::Source { .. } | Command::Project { .. } | Command::PrototypeSeed)
+    ) {
         return Err(crate::models::error::AppError::InvalidInput(
             "source/project prototype not implemented".into(),
         ));

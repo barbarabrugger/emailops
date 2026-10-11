@@ -5,7 +5,8 @@ on:
     paths:
       - 'src-tauri/**'
       - 'tools/source_bridge/**'
-      - 'scripts/source_project_*'
+      - 'scripts/source_project*'
+      - 'Makefile'
       - '.github/workflows/source-project-prototype.yml'
   workflow_dispatch:
 
@@ -25,6 +26,7 @@ jobs:
         with:
           workspaces: src-tauri
           key: source-project-cli
+          cache-on-failure: true
       - name: Native dependencies
         run: |
           sudo apt-get update

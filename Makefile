@@ -736,3 +736,14 @@ eval-all:
 	  EVAL_DRAFT_N="$(EVAL_DRAFT_N)" \
 	  EVAL_SNAPSHOT_DB="$(EVAL_SNAPSHOT_DB)" \
 	  bash scripts/eval_all.sh
+
+# Synthetic-only native source/project prototype; no provider or model calls.
+.PHONY: source-project-build source-project-test source-project-smoke
+source-project-build:
+	bash scripts/source_project.sh build
+
+source-project-test:
+	bash scripts/source_project.sh test
+
+source-project-smoke:
+	bash scripts/source_project.sh smoke
