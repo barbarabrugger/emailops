@@ -8,6 +8,7 @@ case "${1:-test}" in
   test)
     python3 -B -m unittest discover -s tools/source_bridge -p 'test_*.py'
     cargo test --manifest-path src-tauri/Cargo.toml --locked --no-default-features --features cli --test source_project
+    cargo test --manifest-path src-tauri/Cargo.toml --locked --no-default-features --features cli --lib cli::repl::tests::offline_exports_are_rejected_by_repl_before_dispatch
     ;;
   smoke)
     python3 tools/source_bridge/smoke.py --cli src-tauri/target/debug/emailops-cli

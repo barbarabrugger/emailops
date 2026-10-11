@@ -17,8 +17,24 @@ pub async fn dispatch(session: &mut CliSession, command: Command) -> Result<()> 
     match command {
         Command::Accounts { action } => super::accounts::run_account(session, action).await,
 
-        Command::Source { .. } | Command::Project { .. } | Command::PrototypeSeed => Err(AppError::InvalidInput(
-            "source/project prototype not implemented".into(),
+        Command::Source { id } => {
+            let account = session.require_account()?;
+            let value = crate::services::source_project::source(&session.db, &account, &id)?;
+            output::render_export(value, session.mode)
+        }
+
+        Command::Project { manifest } => {
+            let account = session.require_account()?;
+            let bytes = std::fs::read(&manifest)
+                .map_err(|error| AppError::InvalidInput(format!("cannot read project manifest: {error}")))?;
+            let manifest = serde_json::from_slice(&bytes)
+                .map_err(|error| AppError::InvalidInput(format!("invalid project manifest: {error}")))?;
+            let value = crate::services::source_project::project(&session.db, &account, &manifest)?;
+            output::render_export(value, session.mode)
+        }
+
+        Command::PrototypeSeed => Err(AppError::InvalidInput(
+            "prototype-seed is available only as a one-shot command with an explicit --data-dir".into(),
         )),
 
         Command::Emails {

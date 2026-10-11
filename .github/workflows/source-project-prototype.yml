@@ -37,6 +37,8 @@ jobs:
         run: python3 -B -m unittest discover -s tools/source_bridge -p 'test_*.py'
       - name: Source and project contracts
         run: cargo test --manifest-path src-tauri/Cargo.toml --locked --no-default-features --features cli --test source_project
+      - name: REPL isolation contract
+        run: cargo test --manifest-path src-tauri/Cargo.toml --locked --no-default-features --features cli --lib cli::repl::tests::offline_exports_are_rejected_by_repl_before_dispatch
       - name: Build Linux CLI
         run: cargo build --manifest-path src-tauri/Cargo.toml --locked --no-default-features --features cli --bin emailops-cli
       - name: CLI lints and formatting

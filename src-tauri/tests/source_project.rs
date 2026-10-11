@@ -373,6 +373,25 @@ fn truncated_multipart_is_flagged_incomplete() {
 }
 
 #[test]
+fn multipart_with_only_closing_delimiter_is_not_complete() {
+    let (_dir, db, _) = fixture();
+    let raw = b"Content-Type: multipart/mixed; boundary=x\r\n\r\n--x--";
+    db.connection()
+        .execute(
+            "UPDATE original_email_sources SET raw_mime=?1 WHERE email_id='mail-full'",
+            params![raw.as_slice()],
+        )
+        .unwrap();
+    let value = source(&db, "synthetic", "mail-full").unwrap();
+    assert_eq!(
+        STANDARD.decode(value["raw_mime"]["base64"].as_str().unwrap()).unwrap(),
+        raw
+    );
+    assert_eq!(value["completeness"]["original_source_complete"], false);
+    assert!(!value["completeness"]["issues"].as_array().unwrap().is_empty());
+}
+
+#[test]
 fn manifest_reference_order_and_duplicates_do_not_change_dossier_hash() {
     let (_dir, db, _) = fixture();
     let mut m = manifest();

@@ -461,7 +461,15 @@ impl Cli {
     fn try_parse_from_repl(argv: &[String]) -> std::result::Result<Option<Command>, String> {
         use clap::Parser;
         match Cli::try_parse_from(argv) {
-            Ok(cli) => Ok(cli.command),
+            Ok(cli) => {
+                if matches!(
+                    cli.command,
+                    Some(Command::Source { .. } | Command::Project { .. } | Command::PrototypeSeed)
+                ) {
+                    return Err("source, project and prototype-seed are one-shot commands; run them with an explicit --data-dir (and --account for exports)".into());
+                }
+                Ok(cli.command)
+            }
             Err(e) => Err(e.to_string()),
         }
     }
@@ -470,6 +478,33 @@ impl Cli {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn offline_exports_are_rejected_by_repl_before_dispatch() {
+        for args in [
+            vec!["emailops-cli", "source", "room-mail"],
+            vec!["emailops-cli", "project", "--manifest", "project-manifest.json"],
+            vec!["emailops-cli", "prototype-seed"],
+            vec![
+                "emailops-cli",
+                "--data-dir",
+                "explicit",
+                "--account",
+                "synthetic",
+                "source",
+                "room-mail",
+            ],
+        ] {
+            let argv: Vec<String> = args.into_iter().map(str::to_string).collect();
+            let error = Cli::try_parse_from_repl(&argv).expect_err("offline exports must be one-shot only");
+            assert!(error.contains("one-shot"), "{error}");
+        }
+        let argv = vec!["emailops-cli".into(), "show".into(), "room-mail".into()];
+        assert!(matches!(
+            Cli::try_parse_from_repl(&argv),
+            Ok(Some(Command::Show { .. }))
+        ));
+    }
 
     #[test]
     fn bare_line_id_candidate_accepts_single_token_rejects_phrases() {

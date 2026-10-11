@@ -26,6 +26,11 @@ The CI artifact contains the tested x86_64 **debug prototype** binary (no embedd
 model), this adapter and the n8n workflow. It targets Ubuntu 24.04; it is not a
 universal static Linux binary or a supported production release.
 
+When using the extracted artifact, set `CLI="$PWD/emailops-cli"` and use
+`source_bridge/gateway.py` instead of the checkout path shown below. Run its
+smoke with `python3 source_bridge/smoke.py --cli "$CLI"`; Makefile commands
+are for a source checkout.
+
 ## Source contract
 
 `source ID` uses the normal `{ok,data,error}` CLI envelope. It returns the
@@ -55,7 +60,9 @@ avoid guessing project membership from subjects.
 
 The content hash excludes itself and represents the current dossier content.
 Consumers can store the last hash to skip unchanged work. It is a change detector,
-not an exactly-once delivery guarantee. No second task/calendar database or new
+not an exactly-once delivery guarantee. `complete` covers the explicitly
+declared references and supplied MIME; it does not establish mailbox-wide sync
+coverage, correct business interpretation or OCR extraction. No second task/calendar database or new
 project UI is introduced.
 
 ## n8n and other HTTP clients
